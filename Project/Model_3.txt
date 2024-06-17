@@ -1,0 +1,302 @@
+
+
+    import os
+    import sys
+
+    import numpy as np
+    import tensorflow as tf
+    from tensorflow.keras import layers, models
+    from tensorflow.keras.preprocessing.image import ImageDataGenerator
+    from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
+    from tensorflow.keras import regularizers
+
+    # Define constants
+    IMAGE_SIZE = 64
+    BATCH_SIZE = 64
+    NUM_CLASSES = 200
+    EPOCHS = 15 # Increase the number of epochs for better convergence
+
+    # Data augmentation
+    train_datagen = ImageDataGenerator(
+        rescale=1./255,
+        shear_range=0.2,
+        zoom_range=0.2,
+        horizontal_flip=True,
+        rotation_range=30,
+        width_shift_range=0.1,
+        height_shift_range=0.1,
+        brightness_range=[0.8, 1.2],
+        fill_mode='nearest'
+    )
+
+    test_datagen = ImageDataGenerator(rescale=1./255)
+
+    train_generator = train_datagen.flow_from_directory(
+        'tiny-imagenet-200/train',
+        target_size=(IMAGE_SIZE, IMAGE_SIZE),
+        batch_size=BATCH_SIZE,
+        class_mode='categorical'
+    )
+
+    val_datagen = ImageDataGenerator(
+        rescale=1./255,
+        shear_range=0.2,
+        zoom_range=0.2,
+        horizontal_flip=True,
+        rotation_range=30,
+        width_shift_range=0.1,
+        height_shift_range=0.1,
+        brightness_range=[0.8, 1.2],
+        fill_mode='nearest'
+    )
+
+    validation_generator = val_datagen.flow_from_directory(
+        'tiny-imagenet-200/val',
+        target_size=(IMAGE_SIZE, IMAGE_SIZE),
+        batch_size=BATCH_SIZE,
+        class_mode='categorical'
+    )
+
+    /shared/centos7/anaconda3/2021.05/lib/python3.8/site-packages/scipy/__init__.py:138: UserWarning: A NumPy version >=1.16.5 and <1.23.0 is required for this version of SciPy (detected version 1.24.3)
+      warnings.warn(f"A NumPy version >={np_minversion} and <{np_maxversion} is required for this version of "
+
+    Found 100001 images belonging to 200 classes.
+    Found 9950 images belonging to 200 classes.
+
+    EPOCHS=15
+    BATCH_SIZE = 256
+
+    #Deep neural network without dropout 
+    from tensorflow.keras import regularizers, optimizers, activations, initializers
+    from tensorflow.keras.layers import LayerNormalization
+    from tensorflow.keras.layers import Conv2D, MaxPooling2D, AveragePooling2D
+    import pandas as pd
+    import os, shutil
+    import time
+    import tensorflow as tf
+    from tensorflow.keras import layers, models
+    from tensorflow.keras.preprocessing.image import ImageDataGenerator
+    from tensorflow.keras.optimizers import Adam, Nadam, SGD
+    from tensorflow.keras import regularizers
+    from tensorflow.keras.models import Sequential
+    from tensorflow.keras.layers import Dense, Dropout, Activation, Flatten, BatchNormalization
+    from tensorflow.keras.layers import Conv2D, MaxPooling2D, AveragePooling2D
+    from tensorflow.keras import losses
+
+    # Define the model
+    model_DNN1 = models.Sequential()
+
+    # Layer 1
+    model_DNN1.add(Conv2D(64, (3, 3), strides=(1,1), padding='same', input_shape=(IMAGE_SIZE, IMAGE_SIZE, 3), kernel_regularizer=regularizers.l2(0.001), kernel_initializer=initializers.he_normal()))
+    model_DNN1.add(BatchNormalization())
+    model_DNN1.add(Activation('relu'))
+
+    # Layer 2
+    model_DNN1.add(Conv2D(64, (3, 3), strides=(1,1), padding='same', kernel_regularizer=regularizers.l2(0.001), kernel_initializer=initializers.he_normal()))
+    model_DNN1.add(BatchNormalization())
+    model_DNN1.add(Activation('relu'))
+    model_DNN1.add(MaxPooling2D(pool_size=(3, 3), strides=(2, 2), padding='same'))
+
+    # Layer 3
+    model_DNN1.add(Conv2D(128, (3, 3), strides=(1,1), padding='same', kernel_regularizer=regularizers.l2(0.001), kernel_initializer=initializers.he_normal()))
+    model_DNN1.add(BatchNormalization())
+    model_DNN1.add(Activation('relu'))
+
+    # Layer 4
+    model_DNN1.add(Conv2D(128, (3, 3), strides=(1,1), padding='same', kernel_regularizer=regularizers.l2(0.001), kernel_initializer=initializers.he_normal()))
+    model_DNN1.add(BatchNormalization())
+    model_DNN1.add(Activation('relu'))
+    model_DNN1.add(MaxPooling2D(pool_size=(3, 3), strides=(2, 2), padding='same'))
+
+    # Layer 5
+    model_DNN1.add(Conv2D(256, (3, 3), strides=(1,1), padding='same', kernel_regularizer=regularizers.l2(0.001), kernel_initializer=initializers.he_normal()))
+    model_DNN1.add(BatchNormalization())
+    model_DNN1.add(Activation('relu'))
+
+    # Layer 6
+    model_DNN1.add(Conv2D(512, (3, 3), strides=(1,1), padding='same', kernel_regularizer=regularizers.l2(0.001), kernel_initializer=initializers.he_normal()))
+    model_DNN1.add(BatchNormalization())
+    model_DNN1.add(Activation('relu'))
+    model_DNN1.add(MaxPooling2D(pool_size=(3, 3), strides=(2, 2), padding='same'))
+
+    # Flatten
+    model_DNN1.add(Flatten())
+
+    # Fully connected layers
+    model_DNN1.add(Dense(4096, kernel_regularizer=regularizers.l2(0.001), kernel_initializer=initializers.he_normal()))
+    model_DNN1.add(BatchNormalization())
+    model_DNN1.add(Activation('relu'))
+
+    model_DNN1.add(Dense(1024, kernel_regularizer=regularizers.l2(0.001), kernel_initializer=initializers.he_normal()))
+    model_DNN1.add(BatchNormalization())
+    model_DNN1.add(Activation('relu'))
+
+    # Output layer
+    model_DNN1.add(Dense(NUM_CLASSES, activation='softmax'))
+
+    # Compile the model
+    optimizer = optimizers.Adam(learning_rate=0.0001)
+    model_DNN1.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=['accuracy'])
+
+    # Print model summary
+    model_DNN1.summary()
+
+    # Early stopping and learning rate reduction callbacks
+    early_stopping = EarlyStopping(monitor='val_loss', patience=5, verbose=1, restore_best_weights=True)
+
+
+    # Train the model
+    history = model_DNN1.fit(
+        train_generator,
+        steps_per_epoch=train_generator.n // BATCH_SIZE,
+        epochs=EPOCHS,
+        validation_data=validation_generator,
+        validation_steps=validation_generator.n // BATCH_SIZE,
+        callbacks=[early_stopping]
+    )
+
+    #plot for deep neural network without dropout
+    import matplotlib.pyplot as plt
+
+    # Get training and validation accuracy
+    train_accuracy = history.history['accuracy']
+    val_accuracy = history.history['val_accuracy']
+
+    # Get training and validation loss
+    train_loss = history.history['loss']
+    val_loss = history.history['val_loss']
+
+    # Plot training and validation accuracy
+    plt.figure(figsize=(12, 6))
+    plt.subplot(1, 2, 1)
+    plt.plot(train_accuracy, label='Training Accuracy')
+    plt.plot(val_accuracy, label='Validation Accuracy')
+    plt.title('Training and Validation Accuracy')
+    plt.xlabel('Epoch')
+    plt.ylabel('Accuracy')
+    plt.legend()
+
+    # Plot training and validation loss
+    plt.subplot(1, 2, 2)
+    plt.plot(train_loss, label='Training Loss')
+    plt.plot(val_loss, label='Validation Loss')
+    plt.title('Training and Validation Loss')
+    plt.xlabel('Epoch')
+    plt.ylabel('Loss')
+    plt.legend()
+
+    plt.suptitle("Deep Neural Network without dropout")
+
+    plt.tight_layout()
+    plt.show()
+
+    Model: "sequential"
+    _________________________________________________________________
+     Layer (type)                Output Shape              Param #   
+    =================================================================
+     conv2d (Conv2D)             (None, 64, 64, 64)        1792      
+                                                                     
+     batch_normalization (Batch  (None, 64, 64, 64)        256       
+     Normalization)                                                  
+                                                                     
+     activation (Activation)     (None, 64, 64, 64)        0         
+                                                                     
+     conv2d_1 (Conv2D)           (None, 64, 64, 64)        36928     
+                                                                     
+     batch_normalization_1 (Bat  (None, 64, 64, 64)        256       
+     chNormalization)                                                
+                                                                     
+     activation_1 (Activation)   (None, 64, 64, 64)        0         
+                                                                     
+     max_pooling2d (MaxPooling2  (None, 32, 32, 64)        0         
+     D)                                                              
+                                                                     
+     conv2d_2 (Conv2D)           (None, 32, 32, 128)       73856     
+                                                                     
+     batch_normalization_2 (Bat  (None, 32, 32, 128)       512       
+     chNormalization)                                                
+                                                                     
+     activation_2 (Activation)   (None, 32, 32, 128)       0         
+                                                                     
+     conv2d_3 (Conv2D)           (None, 32, 32, 128)       147584    
+                                                                     
+     batch_normalization_3 (Bat  (None, 32, 32, 128)       512       
+     chNormalization)                                                
+                                                                     
+     activation_3 (Activation)   (None, 32, 32, 128)       0         
+                                                                     
+     max_pooling2d_1 (MaxPoolin  (None, 16, 16, 128)       0         
+     g2D)                                                            
+                                                                     
+     conv2d_4 (Conv2D)           (None, 16, 16, 256)       295168    
+                                                                     
+     batch_normalization_4 (Bat  (None, 16, 16, 256)       1024      
+     chNormalization)                                                
+                                                                     
+     activation_4 (Activation)   (None, 16, 16, 256)       0         
+                                                                     
+     conv2d_5 (Conv2D)           (None, 16, 16, 512)       1180160   
+                                                                     
+     batch_normalization_5 (Bat  (None, 16, 16, 512)       2048      
+     chNormalization)                                                
+                                                                     
+     activation_5 (Activation)   (None, 16, 16, 512)       0         
+                                                                     
+     max_pooling2d_2 (MaxPoolin  (None, 8, 8, 512)         0         
+     g2D)                                                            
+                                                                     
+     flatten (Flatten)           (None, 32768)             0         
+                                                                     
+     dense (Dense)               (None, 4096)              134221824 
+                                                                     
+     batch_normalization_6 (Bat  (None, 4096)              16384     
+     chNormalization)                                                
+                                                                     
+     activation_6 (Activation)   (None, 4096)              0         
+                                                                     
+     dense_1 (Dense)             (None, 1024)              4195328   
+                                                                     
+     batch_normalization_7 (Bat  (None, 1024)              4096      
+     chNormalization)                                                
+                                                                     
+     activation_7 (Activation)   (None, 1024)              0         
+                                                                     
+     dense_2 (Dense)             (None, 200)               205000    
+                                                                     
+    =================================================================
+    Total params: 140382728 (535.52 MB)
+    Trainable params: 140370184 (535.47 MB)
+    Non-trainable params: 12544 (49.00 KB)
+    _________________________________________________________________
+    Epoch 1/15
+    390/390 [==============================] - 815s 2s/step - loss: 16.0563 - accuracy: 0.0810 - val_loss: 14.8511 - val_accuracy: 0.0736
+    Epoch 2/15
+    390/390 [==============================] - 827s 2s/step - loss: 13.0113 - accuracy: 0.1401 - val_loss: 11.9626 - val_accuracy: 0.1447
+    Epoch 3/15
+    390/390 [==============================] - 816s 2s/step - loss: 10.7665 - accuracy: 0.1682 - val_loss: 10.1522 - val_accuracy: 0.1377
+    Epoch 4/15
+    390/390 [==============================] - 817s 2s/step - loss: 9.1904 - accuracy: 0.1932 - val_loss: 8.8576 - val_accuracy: 0.1665
+    Epoch 5/15
+    390/390 [==============================] - 829s 2s/step - loss: 8.1190 - accuracy: 0.2133 - val_loss: 7.9441 - val_accuracy: 0.1768
+    Epoch 6/15
+    390/390 [==============================] - 880s 2s/step - loss: 7.4100 - accuracy: 0.2291 - val_loss: 7.5075 - val_accuracy: 0.1809
+    Epoch 7/15
+    390/390 [==============================] - 841s 2s/step - loss: 6.8867 - accuracy: 0.2433 - val_loss: 7.0660 - val_accuracy: 0.1933
+    Epoch 8/15
+    390/390 [==============================] - 847s 2s/step - loss: 6.5434 - accuracy: 0.2500 - val_loss: 6.7270 - val_accuracy: 0.2056
+    Epoch 9/15
+    390/390 [==============================] - 853s 2s/step - loss: 6.2456 - accuracy: 0.2666 - val_loss: 6.5451 - val_accuracy: 0.2270
+    Epoch 10/15
+    390/390 [==============================] - 852s 2s/step - loss: 6.0170 - accuracy: 0.2721 - val_loss: 6.3235 - val_accuracy: 0.2183
+    Epoch 11/15
+    390/390 [==============================] - 862s 2s/step - loss: 5.8189 - accuracy: 0.2809 - val_loss: 6.0971 - val_accuracy: 0.2430
+    Epoch 12/15
+    390/390 [==============================] - 876s 2s/step - loss: 5.6839 - accuracy: 0.2882 - val_loss: 6.1186 - val_accuracy: 0.2167
+    Epoch 13/15
+    390/390 [==============================] - 789s 2s/step - loss: 5.5420 - accuracy: 0.2950 - val_loss: 5.8263 - val_accuracy: 0.2488
+    Epoch 14/15
+    390/390 [==============================] - 647s 2s/step - loss: 5.3879 - accuracy: 0.3115 - val_loss: 5.8562 - val_accuracy: 0.2319
+    Epoch 15/15
+    390/390 [==============================] - 642s 2s/step - loss: 5.3030 - accuracy: 0.3115 - val_loss: 5.8274 - val_accuracy: 0.2241
+
+[]

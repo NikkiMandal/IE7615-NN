@@ -1,0 +1,255 @@
+
+
+    import os
+    import sys
+    import numpy as np
+    import tensorflow as tf
+    from tensorflow.keras import layers, models
+    from tensorflow.keras.preprocessing.image import ImageDataGenerator
+    from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
+    from tensorflow.keras import regularizers
+
+    # Define constants
+    IMAGE_SIZE = 64
+    BATCH_SIZE = 64
+    NUM_CLASSES = 200
+    EPOCHS = 15 # Increase the number of epochs for better convergence
+
+    # Data augmentation
+    train_datagen = ImageDataGenerator(
+        rescale=1./255,
+        shear_range=0.2,
+        zoom_range=0.2,
+        horizontal_flip=True,
+        rotation_range=30,
+        width_shift_range=0.1,
+        height_shift_range=0.1,
+        brightness_range=[0.8, 1.2],
+        fill_mode='nearest'
+    )
+
+    test_datagen = ImageDataGenerator(rescale=1./255)
+
+    train_generator = train_datagen.flow_from_directory(
+        'tiny-imagenet-200/train',
+        target_size=(IMAGE_SIZE, IMAGE_SIZE),
+        batch_size=BATCH_SIZE,
+        class_mode='categorical'
+    )
+
+    val_datagen = ImageDataGenerator(
+        rescale=1./255,
+        shear_range=0.2,
+        zoom_range=0.2,
+        horizontal_flip=True,
+        rotation_range=30,
+        width_shift_range=0.1,
+        height_shift_range=0.1,
+        brightness_range=[0.8, 1.2],
+        fill_mode='nearest'
+    )
+
+    validation_generator = val_datagen.flow_from_directory(
+        'tiny-imagenet-200/val',
+        target_size=(IMAGE_SIZE, IMAGE_SIZE),
+        batch_size=BATCH_SIZE,
+        class_mode='categorical'
+    )
+
+    /shared/centos7/anaconda3/2021.05/lib/python3.8/site-packages/scipy/__init__.py:138: UserWarning: A NumPy version >=1.16.5 and <1.23.0 is required for this version of SciPy (detected version 1.24.3)
+      warnings.warn(f"A NumPy version >={np_minversion} and <{np_maxversion} is required for this version of "
+
+    Found 100001 images belonging to 200 classes.
+    Found 9950 images belonging to 200 classes.
+
+    from tensorflow.keras import regularizers, optimizers, activations, initializers
+    from tensorflow.keras.layers import LayerNormalization
+    from tensorflow.keras.layers import Conv2D, MaxPooling2D, AveragePooling2D
+    import pandas as pd
+    import os, shutil
+    import time
+    import tensorflow as tf
+    from tensorflow.keras import layers, models
+    from tensorflow.keras.preprocessing.image import ImageDataGenerator
+    from tensorflow.keras.optimizers import Adam, Nadam, SGD
+    from tensorflow.keras import regularizers
+    from tensorflow.keras.models import Sequential
+    from tensorflow.keras.layers import Dense, Dropout, Activation, Flatten, BatchNormalization
+    from tensorflow.keras.layers import Conv2D, MaxPooling2D, AveragePooling2D
+    from tensorflow.keras import losses
+    from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
+
+    # Define the model
+    model_DNN2 = models.Sequential()
+
+    # Layer 1
+    model_DNN2.add(Conv2D(64, (3, 3), strides=(1,1), padding='same', input_shape=(IMAGE_SIZE, IMAGE_SIZE, 3), kernel_initializer='he_normal'))
+    model_DNN2.add(BatchNormalization())
+    model_DNN2.add(Activation('relu'))
+    model_DNN2.add(MaxPooling2D(pool_size=(2, 2)))
+
+    # Layer 2
+    model_DNN2.add(Conv2D(128, (3, 3), strides=(1,1), padding='same', kernel_initializer='he_normal'))
+    model_DNN2.add(BatchNormalization())
+    model_DNN2.add(Activation('relu'))
+    model_DNN2.add(MaxPooling2D(pool_size=(2, 2)))
+
+    # Layer 3
+    model_DNN2.add(Conv2D(256, (3, 3), strides=(1,1), padding='same', kernel_initializer='he_normal'))
+    model_DNN2.add(BatchNormalization())
+    model_DNN2.add(Activation('relu'))
+    model_DNN2.add(MaxPooling2D(pool_size=(2, 2)))
+
+    # Flatten
+    model_DNN2.add(Flatten())
+
+    # Fully connected layers
+    model_DNN2.add(Dense(512, kernel_initializer='he_normal'))
+    model_DNN2.add(BatchNormalization())
+    model_DNN2.add(Activation('relu'))
+    model_DNN2.add(Dropout(0.5))
+
+    # Output layer
+    model_DNN2.add(Dense(NUM_CLASSES, activation='softmax'))
+
+    # Compile the model
+    optimizer = optimizers.Adam(lr=0.0001)
+    model_DNN2.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=['accuracy'])
+
+    # Print model summary
+    model_DNN2.summary()
+
+    # Early stopping and learning rate reduction callbacks
+    early_stopping = EarlyStopping(monitor='val_loss', patience=5, verbose=1, restore_best_weights=True)
+    reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=3, verbose=1)
+
+    # Train the model
+    history = model_DNN2.fit(
+        train_generator,
+        steps_per_epoch=train_generator.n // BATCH_SIZE,
+        epochs=15,  # Train for 15 epochs
+        validation_data=validation_generator,
+        validation_steps=validation_generator.n // BATCH_SIZE,
+        callbacks=[early_stopping, reduce_lr]
+    )
+
+    WARNING:absl:`lr` is deprecated in Keras optimizer, please use `learning_rate` or use the legacy optimizer, e.g.,tf.keras.optimizers.legacy.Adam.
+
+    Model: "sequential"
+    _________________________________________________________________
+     Layer (type)                Output Shape              Param #   
+    =================================================================
+     conv2d (Conv2D)             (None, 64, 64, 64)        1792      
+                                                                     
+     batch_normalization (Batch  (None, 64, 64, 64)        256       
+     Normalization)                                                  
+                                                                     
+     activation (Activation)     (None, 64, 64, 64)        0         
+                                                                     
+     max_pooling2d (MaxPooling2  (None, 32, 32, 64)        0         
+     D)                                                              
+                                                                     
+     conv2d_1 (Conv2D)           (None, 32, 32, 128)       73856     
+                                                                     
+     batch_normalization_1 (Bat  (None, 32, 32, 128)       512       
+     chNormalization)                                                
+                                                                     
+     activation_1 (Activation)   (None, 32, 32, 128)       0         
+                                                                     
+     max_pooling2d_1 (MaxPoolin  (None, 16, 16, 128)       0         
+     g2D)                                                            
+                                                                     
+     conv2d_2 (Conv2D)           (None, 16, 16, 256)       295168    
+                                                                     
+     batch_normalization_2 (Bat  (None, 16, 16, 256)       1024      
+     chNormalization)                                                
+                                                                     
+     activation_2 (Activation)   (None, 16, 16, 256)       0         
+                                                                     
+     max_pooling2d_2 (MaxPoolin  (None, 8, 8, 256)         0         
+     g2D)                                                            
+                                                                     
+     flatten (Flatten)           (None, 16384)             0         
+                                                                     
+     dense (Dense)               (None, 512)               8389120   
+                                                                     
+     batch_normalization_3 (Bat  (None, 512)               2048      
+     chNormalization)                                                
+                                                                     
+     activation_3 (Activation)   (None, 512)               0         
+                                                                     
+     dropout (Dropout)           (None, 512)               0         
+                                                                     
+     dense_1 (Dense)             (None, 200)               102600    
+                                                                     
+    =================================================================
+    Total params: 8866376 (33.82 MB)
+    Trainable params: 8864456 (33.82 MB)
+    Non-trainable params: 1920 (7.50 KB)
+    _________________________________________________________________
+    Epoch 1/15
+    1562/1562 [==============================] - 501s 320ms/step - loss: 4.4841 - accuracy: 0.0925 - val_loss: 4.0456 - val_accuracy: 0.1428 - lr: 0.0010
+    Epoch 2/15
+    1562/1562 [==============================] - 602s 385ms/step - loss: 3.8458 - accuracy: 0.1679 - val_loss: 3.7457 - val_accuracy: 0.1880 - lr: 0.0010
+    Epoch 3/15
+    1562/1562 [==============================] - 603s 386ms/step - loss: 3.6100 - accuracy: 0.2040 - val_loss: 3.5470 - val_accuracy: 0.2172 - lr: 0.0010
+    Epoch 4/15
+    1562/1562 [==============================] - 588s 376ms/step - loss: 3.4469 - accuracy: 0.2293 - val_loss: 3.4703 - val_accuracy: 0.2336 - lr: 0.0010
+    Epoch 5/15
+    1562/1562 [==============================] - 608s 389ms/step - loss: 3.3272 - accuracy: 0.2497 - val_loss: 3.4317 - val_accuracy: 0.2411 - lr: 0.0010
+    Epoch 6/15
+    1562/1562 [==============================] - 600s 384ms/step - loss: 3.2164 - accuracy: 0.2691 - val_loss: 3.2221 - val_accuracy: 0.2729 - lr: 0.0010
+    Epoch 7/15
+    1562/1562 [==============================] - 602s 385ms/step - loss: 3.1340 - accuracy: 0.2837 - val_loss: 3.1518 - val_accuracy: 0.2897 - lr: 0.0010
+    Epoch 8/15
+    1562/1562 [==============================] - 598s 383ms/step - loss: 3.0608 - accuracy: 0.2965 - val_loss: 3.2354 - val_accuracy: 0.2789 - lr: 0.0010
+    Epoch 9/15
+    1562/1562 [==============================] - 599s 383ms/step - loss: 2.9903 - accuracy: 0.3083 - val_loss: 3.0533 - val_accuracy: 0.3165 - lr: 0.0010
+    Epoch 10/15
+    1562/1562 [==============================] - 601s 385ms/step - loss: 2.9393 - accuracy: 0.3177 - val_loss: 3.0135 - val_accuracy: 0.3162 - lr: 0.0010
+    Epoch 11/15
+    1562/1562 [==============================] - 581s 372ms/step - loss: 2.8943 - accuracy: 0.3281 - val_loss: 2.9755 - val_accuracy: 0.3268 - lr: 0.0010
+    Epoch 12/15
+    1562/1562 [==============================] - 598s 383ms/step - loss: 2.8470 - accuracy: 0.3352 - val_loss: 3.0113 - val_accuracy: 0.3179 - lr: 0.0010
+    Epoch 13/15
+    1562/1562 [==============================] - 556s 356ms/step - loss: 2.8083 - accuracy: 0.3439 - val_loss: 2.9791 - val_accuracy: 0.3222 - lr: 0.0010
+    Epoch 14/15
+    1562/1562 [==============================] - ETA: 0s - loss: 2.7705 - accuracy: 0.3501
+    Epoch 14: ReduceLROnPlateau reducing learning rate to 0.00010000000474974513.
+    1562/1562 [==============================] - 516s 330ms/step - loss: 2.7705 - accuracy: 0.3501 - val_loss: 3.0720 - val_accuracy: 0.3136 - lr: 0.0010
+    Epoch 15/15
+    1562/1562 [==============================] - 507s 324ms/step - loss: 2.6320 - accuracy: 0.3752 - val_loss: 2.6813 - val_accuracy: 0.3861 - lr: 1.0000e-04
+
+    import matplotlib.pyplot as plt
+
+    # Get training and validation accuracy
+    train_accuracy = history.history['accuracy']
+    val_accuracy = history.history['val_accuracy']
+
+    # Get training and validation loss
+    train_loss = history.history['loss']
+    val_loss = history.history['val_loss']
+
+    # Plot training and validation accuracy
+    plt.figure(figsize=(12, 6))
+    plt.subplot(1, 2, 1)
+    plt.plot(train_accuracy, label='Training Accuracy')
+    plt.plot(val_accuracy, label='Validation Accuracy')
+    plt.title('Training and Validation Accuracy')
+    plt.xlabel('Epoch')
+    plt.ylabel('Accuracy')
+    plt.legend()
+
+    # Plot training and validation loss
+    plt.subplot(1, 2, 2)
+    plt.plot(train_loss, label='Training Loss')
+    plt.plot(val_loss, label='Validation Loss')
+    plt.title('Training and Validation Loss')
+    plt.xlabel('Epoch')
+    plt.ylabel('Loss')
+    plt.legend()
+
+    plt.tight_layout()
+    plt.show()
+
+[]
